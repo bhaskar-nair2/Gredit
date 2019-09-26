@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "709496168218",
+    "firebase_url": "https://gredit-aad83.firebaseio.com",
+    "project_id": "gredit-aad83",
+    "storage_bucket": "gredit-aad83.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:709496168218:android:36f2cf7434260af83b56a3",
+        "android_client_info": {
+          "package_name": "com.example.gredit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "709496168218-cg4b9v3sikk13fjap9lusnnhn4oq7red.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB1BLeEiAXn-zo-bKsd_Sn4fnmGirmi_lc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "709496168218-cg4b9v3sikk13fjap9lusnnhn4oq7red.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

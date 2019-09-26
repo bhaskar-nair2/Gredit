@@ -1,6 +1,6 @@
-# gredit
+# Gredit
 
-A new Flutter project.
+A convenient Editor for Groups.
 
 ## Getting Started
 

@@ -1,10 +1,11 @@
 // Will contain the home page, i.e. files and add new all  that
 import 'package:flutter/material.dart';
-
 import 'package:gredit/screens/drawer.dart';
 import 'package:gredit/screens/editor.dart';
 
-class DocCardData {
+abstract class ListItem {}
+
+class DocCardData implements ListItem {
   final String name;
   final IconData icon;
   final String id;
@@ -12,9 +13,17 @@ class DocCardData {
   DocCardData(this.name, this.icon, this.id);
 }
 
+List datList = [
+  DocCardData('Name', Icons.access_alarm, '1'),
+  DocCardData('Fame', Icons.snooze, '2'),
+  DocCardData('Game', Icons.account_circle, '3'),
+  DocCardData('Lame', Icons.accessibility, '4'),
+  DocCardData('Game', Icons.account_circle, '5'),
+];
+
 class Home extends StatelessWidget {
   const Home({Key key}) : super(key: key);
-
+  
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -23,14 +32,14 @@ class Home extends StatelessWidget {
             title: Text("Home"),
           ),
           drawer: DashBoard(),
-          body: GridView.count(
+          body: GridView.builder(
             padding: EdgeInsets.all(20),
-            crossAxisCount: 2,
-            children: List.generate(11, (index) {
-              return DocCard(
-                  data: DocCardData('Doc-1', Icons.domain,
-                      '$index')); // Supply name and icon from here
-            }),
+            gridDelegate:
+                SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
+            itemCount: datList.length,
+            itemBuilder: (context, index) {
+              return DocCard(key: Key('$index'), data: datList[index]);
+            },
           )),
     );
   }
@@ -54,12 +63,12 @@ class DocCard extends StatelessWidget {
           width: 200,
           height: 500,
           child: Center(
-            child: Column(  
+            child: Column(
               children: <Widget>[
                 Icon(
                   data.icon,
                   size: 54.0,
-                  color: Colors.red,
+                  color: Colors.blue,
                 ),
                 Text(data.name),
               ],
