@@ -1,6 +1,7 @@
 // The main editor page, most things and complications would reside here
 import 'package:gredit/screens/drawer.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EditorData {
   final String name;
@@ -17,6 +18,13 @@ class EditorPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final EditorData dats = ModalRoute.of(context).settings.arguments;
+    Firestore.instance
+        .collection('docs')
+        .document('$dats.id')
+        .get()
+        .then((DocumentSnapshot ds) {
+      return ds.data;
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -30,11 +38,7 @@ class EditorPage extends StatelessWidget {
             ControlBar(),
             DecoBar(),
             Expanded(
-              child: ListView(
-                children: List.generate(3, (index) {
-                  return Page(); // Supply name and icon from here
-                }),
-              ),
+              child: pageMaker(docId: dats.id),
             )
           ],
         ),
@@ -43,13 +47,69 @@ class EditorPage extends StatelessWidget {
   }
 }
 
+class pageMaker extends StatelessWidget {
+  const pageMaker({Key key, this.docId}) : super(key: key);
+
+  final String docId;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream:
+          Firestore.instance.collection('docs').document('$docId').snapshots(),
+      builder:
+          (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+        List<String> pages = List.from(snapshot.data.data['pages']);
+        if (snapshot.hasError)
+          return new Text('Error: ${snapshot.error}');
+        else
+          return new ListView(
+            children: pages.map((val) {
+              return new Page(pageData: val, docId: docId);
+            }).toList(),
+          );
+      },
+    );
+  }
+}
+
 class Page extends StatefulWidget {
-  Page({Key key}) : super(key: key);
+  Page({Key key, this.pageData, this.docId}) : super(key: key);
+
+  final String pageData;
+  final String docId;
 
   _PageState createState() => _PageState();
 }
 
 class _PageState extends State<Page> {
+// text: widget.pageData.toString()
+  final myController = TextEditingController();
+
+  Future<void> _updateTaskValue(String text) {
+    Firestore().runTransaction((Transaction transaction) {
+      Firestore.instance
+          .collection('docs')
+          .document(widget.docId)
+          .setData({"pages": text});
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Start listening to changes.
+    myController.addListener(() => _updateTaskValue(myController.text));
+  }
+
+  @override
+  void dispose() {
+    // Clean up the controller when the widget is removed from the
+    // widget tree.
+    myController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -58,6 +118,7 @@ class _PageState extends State<Page> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
         child: TextField(
+          controller: myController,
           maxLines: 24,
           decoration: InputDecoration(border: InputBorder.none),
         ),
@@ -101,7 +162,10 @@ class _DecoBarState extends State<DecoBar> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: <Widget>[
-          Icon(Icons.format_align_left, size: 20,),
+          Icon(
+            Icons.format_align_left,
+            size: 20,
+          ),
         ],
       ),
     );

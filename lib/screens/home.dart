@@ -2,28 +2,35 @@
 import 'package:flutter/material.dart';
 import 'package:gredit/screens/drawer.dart';
 import 'package:gredit/screens/editor.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+final docsRef = Firestore.instance.collection('docs');
 
 abstract class ListItem {}
 
 class DocCardData implements ListItem {
-  final String name;
-  final IconData icon;
-  final String id;
+  String name;
+  IconData icon;
+  String id;
+  String user;
 
-  DocCardData(this.name, this.icon, this.id);
+  DocCardData(DocumentSnapshot data) {
+    this.name = data['name'];
+    this.id = data.documentID;
+    this.user = data['user'];
+    switch (data['type']) {
+      case 'doc':
+        this.icon = Icons.description;
+        break;
+      default:
+        this.icon = Icons.insert_chart;
+    }
+  }
 }
-
-List datList = [
-  DocCardData('Name', Icons.access_alarm, '1'),
-  DocCardData('Fame', Icons.snooze, '2'),
-  DocCardData('Game', Icons.account_circle, '3'),
-  DocCardData('Lame', Icons.accessibility, '4'),
-  DocCardData('Game', Icons.account_circle, '5'),
-];
 
 class Home extends StatelessWidget {
   const Home({Key key}) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -32,15 +39,33 @@ class Home extends StatelessWidget {
             title: Text("Home"),
           ),
           drawer: DashBoard(),
-          body: GridView.builder(
-            padding: EdgeInsets.all(20),
-            gridDelegate:
-                SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
-            itemCount: datList.length,
-            itemBuilder: (context, index) {
-              return DocCard(key: Key('$index'), data: datList[index]);
-            },
-          )),
+          body: GridMaker()),
+    );
+  }
+}
+
+class GridMaker extends StatelessWidget {
+  const GridMaker({Key key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: Firestore.instance.collection('docs').snapshots(),
+      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+        if (snapshot.hasError) return new Text('Error: ${snapshot.error}');
+        switch (snapshot.connectionState) {
+          case ConnectionState.waiting:
+            return Text('Loading');
+          default:
+            return GridView.count(
+              padding: EdgeInsets.all(20),
+              crossAxisCount: 2,
+              children: snapshot.data.documents.map((DocumentSnapshot data) {
+                return DocCard(data: DocCardData(data));
+              }).toList(),
+            );
+        }
+      },
     );
   }
 }
@@ -81,3 +106,13 @@ class DocCard extends StatelessWidget {
     ));
   }
 }
+
+//  var gridView = GridView.builder(
+//       padding: EdgeInsets.all(20),
+//       gridDelegate:
+//           SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
+//       itemCount: datList.length,
+//       itemBuilder: (context, index) {
+//         return DocCard(key: Key('$index'), data: datList[index]);
+//       },
+//     );
