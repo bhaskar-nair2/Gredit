@@ -38,7 +38,7 @@ class EditorPage extends StatelessWidget {
             ControlBar(),
             DecoBar(),
             Expanded(
-              child: pageMaker(docId: dats.id),
+              child: PageMaker(docId: dats.id),
             )
           ],
         ),
@@ -47,8 +47,8 @@ class EditorPage extends StatelessWidget {
   }
 }
 
-class pageMaker extends StatelessWidget {
-  const pageMaker({Key key, this.docId}) : super(key: key);
+class PageMaker extends StatelessWidget {
+  const PageMaker({Key key, this.docId}) : super(key: key);
 
   final String docId;
 
@@ -59,14 +59,21 @@ class pageMaker extends StatelessWidget {
           Firestore.instance.collection('docs').document('$docId').snapshots(),
       builder:
           (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-        List<String> pages = List.from(snapshot.data.data['pages']);
+         int pageCount = int.parse(snapshot.data.data['totalPg'].toString());
+
         if (snapshot.hasError)
           return new Text('Error: ${snapshot.error}');
         else
-          return new ListView(
-            children: pages.map((val) {
-              return new Page(pageData: val, docId: docId);
-            }).toList(),
+          return new ListView.builder(
+            itemCount: pageCount,
+            itemBuilder: (BuildContext context, index) {
+              Map pgData = snapshot.data.data['page$index'];
+              return new Page(
+                pageData: pgData,
+                docId: docId,
+                index: index,
+              );
+            },
           );
       },
     );
@@ -74,10 +81,11 @@ class pageMaker extends StatelessWidget {
 }
 
 class Page extends StatefulWidget {
-  Page({Key key, this.pageData, this.docId}) : super(key: key);
+  Page({Key key, this.pageData, this.docId, this.index}) : super(key: key);
 
-  final String pageData;
+  final Map pageData;
   final String docId;
+  final num index;
 
   _PageState createState() => _PageState();
 }
@@ -86,12 +94,11 @@ class _PageState extends State<Page> {
 // text: widget.pageData.toString()
   final myController = TextEditingController();
 
-  Future<void> _updateTaskValue(String text) {
+  Future<void> _updateTaskValue(String text, num index) {
     Firestore().runTransaction((Transaction transaction) {
-      Firestore.instance
-          .collection('docs')
-          .document(widget.docId)
-          .setData({"pages": text});
+      Firestore.instance.collection('docs').document(widget.docId).setData({
+        "page$index": {'text': text}
+      });
     });
   }
 
@@ -99,7 +106,8 @@ class _PageState extends State<Page> {
   void initState() {
     super.initState();
     // Start listening to changes.
-    myController.addListener(() => _updateTaskValue(myController.text));
+    myController
+        .addListener(() => _updateTaskValue(myController.text, widget.index));
   }
 
   @override
